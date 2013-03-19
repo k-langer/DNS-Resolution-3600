@@ -102,16 +102,23 @@ int main(int argc, char *argv[]) {
         *offset = 0;
         port = atoi(offset+1);
     } 
-    printf("Server: %s Port: %d Name: %s\n",server,port,name);
-    
-    
-    
-    /*
-   
-        
+    printf("Server: %s Port: %d Name: %s\n",server,port,name); 
   // construct the DNS request
+    char * packetDNS =  calloc(MAX_IP_PACKET_SIZE, sizeof(char));
+    headerDNS_t * header =  calloc(1, sizeof(headerDNS_t));
+    questionDNS_t * question =  calloc(1, sizeof(questionDNS_t));
+    header->ID = htons(QUERY_ID);
+    header->QDCOUNT = htons(1);
+    printf("size of %d\n", sizeof(question->QNAME));
+    memcpy(question, name, sizeof(question->QNAME));
 
-  // send the DNS request (and call dump_packet with your request)
+    memcpy( packetDNS , header ,  sizeof(headerDNS_t) );
+    memcpy(packetDNS+sizeof(headerDNS_t), question , sizeof(questionDNS_t) );
+   // send the DNS request (and call dump_packet with your request)
+    dump_packet(packetDNS,20);
+/*
+
+  
   
   // first, open a UDP socket  
   int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
