@@ -90,7 +90,25 @@ int main(int argc, char *argv[]) {
    */
 
   // process the arguments
-
+    if (argc != 3) {
+         printf("Usage: ./3600dns @<server:port> <name>\n");
+        exit(-1);
+    } 
+    int port = 53;
+    char*server = argv[1] + 1;
+    char*name = argv[2];
+    char* offset = strchr(argv[1], ':');
+    if (offset) {
+        *offset = 0;
+        port = atoi(offset+1);
+    } 
+    printf("Server: %s Port: %d Name: %s\n",server,port,name);
+    
+    
+    
+    /*
+   
+        
   // construct the DNS request
 
   // send the DNS request (and call dump_packet with your request)
@@ -132,6 +150,6 @@ int main(int argc, char *argv[]) {
   }
 
   // print out the result
-  
+  */
   return 0;
 }
