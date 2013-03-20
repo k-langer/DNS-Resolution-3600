@@ -28,7 +28,7 @@ typedef struct headerDNS{
 } headerDNS_t;
 
 typedef struct questionDNS{
-    unsigned int NULL:8;
+    unsigned int nill:8;
     unsigned int QTYPE:16;
     unsigned int QCLASS:16;   
 } questionDNS_t;
