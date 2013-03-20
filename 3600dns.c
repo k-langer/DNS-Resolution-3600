@@ -94,6 +94,7 @@ int main(int argc, char *argv[]) {
          printf("Usage: ./3600dns @<server:port> <name>\n");
         exit(-1);
     } 
+   // set the default port to 53
     int port = 53;
     char* server = argv[1] + 1;
     char* name = argv[2];
@@ -104,7 +105,7 @@ int main(int argc, char *argv[]) {
     } 
    
   // construct the DNS request
-    char * packetDNS =  (char*)calloc(MAX_IP_PACKET_SIZE, sizeof(char));
+    unsigned char * packetDNS =  (unsigned char*)calloc(MAX_IP_PACKET_SIZE, sizeof(char));
     if (!packetDNS) {
         return -1;
     }
@@ -116,10 +117,11 @@ int main(int argc, char *argv[]) {
     if (!question) {
         return -1;
     }
-
+    //setup the header
     header->ID = htons(QUERY_ID);
     header->RD = ~(0);
     header->QDCOUNT = htons(0x0001);
+    //setup the question, QNAME is added later
     question->QTYPE = htons(0x0001);
     question->QCLASS = htons(0x0001);
 
@@ -133,7 +135,7 @@ int main(int argc, char *argv[]) {
     char* period = NULL;
     *( name + length ) = '.';
     *( name + length + 1 ) = 0;
-    while ( period = strchr(name, '.') ) {
+    while ( (period = strchr(name, '.')) != 0 ) {
         *period = 0;
         length = strlen(name);
         memcpy( packetDNS + packetSize, &length, 1 );
@@ -154,23 +156,21 @@ int main(int argc, char *argv[]) {
 
    // send the DNS request (and call dump_packet with your request)
     dump_packet( packetDNS, packetSize );
-/*
 
-  
-  
   // first, open a UDP socket  
   int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
   // next, construct the destination address
   struct sockaddr_in out;
   out.sin_family = AF_INET;
-  out.sin_port = htons(<<DNS server port number, as short>>);
-  out.sin_addr.s_addr = inet_addr(<<DNS server IP as char*>>);
+  out.sin_port = htons((short) port );
+  out.sin_addr.s_addr = inet_addr(server);
 
-  if (sendto(sock, <<your packet>>, <<packet len>>, 0, &out, sizeof(out)) < 0) {
-    // an error occurred
+  if (sendto(sock, packetDNS, packetSize, 0, (struct sockaddr*)&out, sizeof(out)) < 0) {
+    printf("Error occured in sento\n");
+    return -1;
   }
-
+/*
   // wait for the DNS reply (timeout: 5 seconds)
   struct sockaddr_in in;
   socklen_t in_len;
