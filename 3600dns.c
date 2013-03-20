@@ -95,12 +95,12 @@ int main(int argc, char *argv[]) {
         exit(-1);
     } 
     int port = 53;
-    char*server = argv[1] + 1;
-    char*name = argv[2];
+    char* server = argv[1] + 1;
+    char* name = argv[2];
     char* offset = strchr(argv[1], ':');
     if (offset) {
         *offset = 0;
-        port = atoi(offset+1);
+        port = atoi(offset + 1);
     } 
    
   // construct the DNS request
