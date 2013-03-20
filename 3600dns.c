@@ -118,10 +118,10 @@ int main(int argc, char *argv[]) {
     }
 
     header->ID = htons(QUERY_ID);
-    header->RD = htons(1);
-    header->QDCOUNT = htons(1);
-    question->QTYPE = htons(1);
-    question->QCLASS = htons(1);
+    header->RD = ~(0);
+    header->QDCOUNT = htons(0x0001);
+    question->QTYPE = htons(0x0001);
+    question->QCLASS = htons(0x0001);
 
     int packetSize = 0;
     //copy header into packet
