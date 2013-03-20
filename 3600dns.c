@@ -142,10 +142,14 @@ int main(int argc, char *argv[]) {
         packetSize += length;
         name = period + 1;
     }
+    //copy zero byte at end of qname
+    char zeroByte = 0;
+    memcpy( packetDNS + packetSize, &zeroByte, 1 );
+    packetSize++;
 
     //copy question into packet
-    memcpy( packetDNS + packetSize, question, SIZEOF_QUESTION );
-    packetSize += SIZEOF_QUESTION;
+    memcpy( packetDNS + packetSize, question, sizeof(questionDNS_t) );
+    packetSize += sizeof(questionDNS_t);
 
 
    // send the DNS request (and call dump_packet with your request)

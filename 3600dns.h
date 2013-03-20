@@ -11,7 +11,6 @@
 
 #define MAX_IP_PACKET_SIZE 65542
 #define QUERY_ID 1337
-#define SIZEOF_QUESTION 5
 
 typedef struct headerDNS{
     unsigned int ID:16; 
@@ -30,10 +29,8 @@ typedef struct headerDNS{
 } headerDNS_t;
 
 typedef struct questionDNS{
-    unsigned int QNAME_TERMINATOR:8;
     unsigned int QTYPE:16;
     unsigned int QCLASS:16;  
-    unsigned int PADDING:8; 
 } questionDNS_t;
 
 #endif
