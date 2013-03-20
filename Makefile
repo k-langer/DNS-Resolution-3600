@@ -1,6 +1,6 @@
 TARGET = 3600dns
 
-$(TARGET): $(TARGET).c
+$(TARGET): $(TARGET).?
 	gcc -std=c99 -O0 -g -lm -Wall -pedantic -Wextra -o $@ $<
 
 all: $(TARGET)
