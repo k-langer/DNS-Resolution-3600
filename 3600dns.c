@@ -125,17 +125,17 @@ int main(int argc, char *argv[]) {
 
     //memcpy(question, name, sizeof(question->QNAME));
     int len = strlen(name);
-    int packetOffset = 0;
+    int packetSize = 0;
     memcpy( packetDNS, header,  sizeof(headerDNS_t) );
-    position += sizeof(headerDNS_t);
+    packetSize += sizeof(headerDNS_t);
     //memcpy(packetDNS+sizeof(headerDNS_t), question , sizeof(questionDNS_t) );   
-    memcpy( packetDNS + position, &len, 1 );
-    position += 1;
-    memcpy( packetDNS + position, name, len );
-    position += len;
-    memcpy( packetDNS + position, question, sizeof(questionDNS_t) );
+    memcpy( packetDNS + packetSize, &len, 1 );
+    packetSize += 1;
+    memcpy( packetDNS + packetSize, name, len );
+    packetSize += len;
+    memcpy( packetDNS + packetSize, question, sizeof(questionDNS_t) );
    // send the DNS request (and call dump_packet with your request)
-    dump_packet( packetDNS, position );
+    dump_packet( packetDNS, packetSize );
 /*
 
   
