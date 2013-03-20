@@ -104,26 +104,38 @@ int main(int argc, char *argv[]) {
     } 
    
   // construct the DNS request
-    char * packetDNS =  calloc(MAX_IP_PACKET_SIZE, sizeof(char));
-    headerDNS_t * header =  calloc(1, sizeof(headerDNS_t));
-    questionDNS_t * question =  calloc(1, sizeof(questionDNS_t));
+    char * packetDNS =  (char*)calloc(MAX_IP_PACKET_SIZE, sizeof(char));
+    if (!packetDNS) {
+        return -1;
+    }
+    headerDNS_t * header =  (headerDNS_t*)calloc(1, sizeof(headerDNS_t));
+    if (!header) {
+        return -1;
+    }
+    questionDNS_t * question =  (questionDNS_t*)calloc(1, sizeof(questionDNS_t));
+    if (!question) {
+        return -1;
+    }
+
     header->ID = htons(QUERY_ID);
     header->RD = htons(1);
     header->QDCOUNT = htons(1);
     question->QTYPE = htons(1);
     question->QCLASS = htons(1);
-    
-    //question->QTYPE = htons(1);
-    //question->QCLASS = htons(1);
+
     //memcpy(question, name, sizeof(question->QNAME));
     int len = strlen(name);
-    memcpy( packetDNS , header ,  sizeof(headerDNS_t) );
+    int packetOffset = 0;
+    memcpy( packetDNS, header,  sizeof(headerDNS_t) );
+    position += sizeof(headerDNS_t);
     //memcpy(packetDNS+sizeof(headerDNS_t), question , sizeof(questionDNS_t) );   
-    memcpy(packetDNS+sizeof(headerDNS_t),&len,1);
-    memcpy(packetDNS+sizeof(headerDNS_t)+1,name,len);
-    memcpy(packetDNS+sizeof(headerDNS_t)+1+len,question,sizeof(questionDNS_t));
+    memcpy( packetDNS + position, &len, 1 );
+    position += 1;
+    memcpy( packetDNS + position, name, len );
+    position += len;
+    memcpy( packetDNS + position, question, sizeof(questionDNS_t) );
    // send the DNS request (and call dump_packet with your request)
-    dump_packet(packetDNS,sizeof(headerDNS_t)+1+len+sizeof(questionDNS_t));
+    dump_packet( packetDNS, position );
 /*
 
   
