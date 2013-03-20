@@ -123,17 +123,31 @@ int main(int argc, char *argv[]) {
     question->QTYPE = htons(1);
     question->QCLASS = htons(1);
 
-    //memcpy(question, name, sizeof(question->QNAME));
-    int len = strlen(name);
     int packetSize = 0;
+    //copy header into packet
     memcpy( packetDNS, header,  sizeof(headerDNS_t) );
     packetSize += sizeof(headerDNS_t);
-    //memcpy(packetDNS+sizeof(headerDNS_t), question , sizeof(questionDNS_t) );   
-    memcpy( packetDNS + packetSize, &len, 1 );
-    packetSize += 1;
-    memcpy( packetDNS + packetSize, name, len );
-    packetSize += len;
+
+    //copy qname into packet
+    int length = strlen(name);
+    char* period = NULL;
+    *( name + length ) = '.';
+    *( name + length + 1 ) = 0;
+    while ( period = strchr(name, '.') ) {
+        *period = 0;
+        length = strlen(name);
+        memcpy( packetDNS + packetSize, &length, 1 );
+        packetSize++;
+        memcpy( packetDNS + packetSize, name, length);
+        packetSize += length;
+        name = period + 1;
+    }
+
+    //copy question into packet
     memcpy( packetDNS + packetSize, question, sizeof(questionDNS_t) );
+    packetSize += sizeof(questionDNS_t);
+
+
    // send the DNS request (and call dump_packet with your request)
     dump_packet( packetDNS, packetSize );
 /*
