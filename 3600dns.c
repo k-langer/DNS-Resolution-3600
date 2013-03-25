@@ -144,6 +144,7 @@ int main(int argc, char *argv[]) {
         packetSize += length;
         name = period + 1;
     }
+
     //copy zero byte at end of qname
     char zeroByte = 0;
     memcpy( packetDNS + packetSize, &zeroByte, 1 );
@@ -170,35 +171,38 @@ int main(int argc, char *argv[]) {
         printf("Error occured in sento\n");
         return -1;
     }
-  memset(packetDNS,0,MAX_IP_PACKET_SIZE);
-  packetSize = 0;
-  // wait for the DNS reply (timeout: 5 seconds)
-  struct sockaddr_in in;
-  socklen_t in_len;
 
-  // construct the socket set
-  fd_set socks;
-  FD_ZERO(&socks);
-  FD_SET(sock, &socks);
+    //Clear question buffer to use for answer buffer in the future    
+    memset(packetDNS,0,MAX_IP_PACKET_SIZE);
+    packetSize = 0;
 
-  // construct the timeout
-  struct timeval t;
-  t.tv_sec = 5;
-  t.tv_usec = 0;
+    // wait for the DNS reply (timeout: 5 seconds)
+    struct sockaddr_in in;
+    socklen_t in_len;
 
-  // wait to receive, or for a timeout
-  if (select(sock + 1, &socks, NULL, NULL, &t)) {
-   if (recvfrom(sock, packetDNS/*<<your input buffer>>*/, MAX_IP_PACKET_SIZE/*<<input len>>*/, 0, (struct sockaddr*) &in, &in_len) < 0) {
-    printf("Error occured in recvfrom\n");
-    return -1;    
+    // construct the socket set
+    fd_set socks;
+    FD_ZERO(&socks);
+    FD_SET(sock, &socks);
+
+    // construct the timeout
+    struct timeval t;
+    t.tv_sec = 5;
+    t.tv_usec = 0;
+
+    // wait to receive, or for a timeout
+    if (select(sock + 1, &socks, NULL, NULL, &t)) {
+    if (recvfrom(sock, packetDNS/*<<input buffer>>*/, MAX_IP_PACKET_SIZE/*<<input len>>*/, 0, (struct sockaddr*) &in, &in_len) < 0) {
+        printf("Error occured in recvfrom\n");
+        return -1;    
     }
-  } else {
-    // a timeout occurred
-    printf("Timeout of %d occured\n", (int)t.tv_sec);
-  }
+    } else {
+        // a timeout occurred
+        printf("Timeout of %d seconds\n", (int)t.tv_sec);
+    }
 
-  // print out the result
-  dump_packet( packetDNS,  packetSize );
+     // print out the result
+     dump_packet( packetDNS,  packetSize );
 
-  return 0;
+    return 0;
 }
