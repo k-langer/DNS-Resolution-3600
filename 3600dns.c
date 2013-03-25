@@ -157,20 +157,21 @@ int main(int argc, char *argv[]) {
    // send the DNS request (and call dump_packet with your request)
     dump_packet( packetDNS, packetSize );
 
-  // first, open a UDP socket  
-  int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+   // first, open a UDP socket  
+    int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
-  // next, construct the destination address
-  struct sockaddr_in out;
-  out.sin_family = AF_INET;
-  out.sin_port = htons((short) port );
-  out.sin_addr.s_addr = inet_addr(server);
+   // next, construct the destination address
+    struct sockaddr_in out;
+    out.sin_family = AF_INET;
+    out.sin_port = htons( (short) port );
+    out.sin_addr.s_addr = inet_addr(server);
 
-  if (sendto(sock, packetDNS, packetSize, 0, (struct sockaddr*)&out, sizeof(out)) < 0) {
-    printf("Error occured in sento\n");
-    return -1;
-  }
-/*
+    if (sendto(sock, packetDNS, packetSize, 0, (struct sockaddr*)&out, sizeof(out)) < 0) {
+        printf("Error occured in sento\n");
+        return -1;
+    }
+  memset(packetDNS,0,MAX_IP_PACKET_SIZE);
+  packetSize = 0;
   // wait for the DNS reply (timeout: 5 seconds)
   struct sockaddr_in in;
   socklen_t in_len;
@@ -182,19 +183,22 @@ int main(int argc, char *argv[]) {
 
   // construct the timeout
   struct timeval t;
-  t.tv_sec = <<your timeout in seconds>>;
+  t.tv_sec = 5;
   t.tv_usec = 0;
 
   // wait to receive, or for a timeout
   if (select(sock + 1, &socks, NULL, NULL, &t)) {
-    if (recvfrom(sock, <<your input buffer>>, <<input len>>, 0, &in, &in_len) < 0) {
-      // an error occured
+   if (recvfrom(sock, packetDNS/*<<your input buffer>>*/, MAX_IP_PACKET_SIZE/*<<input len>>*/, 0, (struct sockaddr*) &in, &in_len) < 0) {
+    printf("Error occured in recvfrom\n");
+    return -1;    
     }
   } else {
     // a timeout occurred
+    printf("Timeout of %d occured\n", (int)t.tv_sec);
   }
 
   // print out the result
-  */
+  dump_packet( packetDNS,  packetSize );
+
   return 0;
 }
