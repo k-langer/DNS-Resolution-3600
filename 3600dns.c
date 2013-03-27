@@ -22,6 +22,8 @@
 
 #include "3600dns.h"
 
+int parse_qname( char* packet, char* qname );
+
 /**
  * This function will print a hex dump of the provided packet to the screen
  * to help facilitate debugging.  In your milestone and final submission, you 
@@ -172,8 +174,8 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    //Clear question buffer to use for answer buffer in the future    
-    memset(packetDNS,0,MAX_IP_PACKET_SIZE);
+    //Clear question buffer to use for answer buffer in the future  
+    memset( packetDNS, 0, MAX_IP_PACKET_SIZE );
     packetSize = 0;
 
     // wait for the DNS reply (timeout: 5 seconds)
@@ -201,8 +203,35 @@ int main(int argc, char *argv[]) {
         printf("NORESPONSE");
     }
 
-     // print out the result
-     dump_packet( packetDNS, strlen(packetDNS) );
+    
+
+    // print out the result
+    dump_packet( packetDNS, 100 );
+
+    free(packetDNS);
+    free(qname);
+    free(header);   
+    free(question);
 
     return 0;
 }
+
+int parse_qname( unsigned char* packet, unsigned char* qname, int startPosition ) {
+    unsigned char a = packet[startPosition];
+    int position = startPosition + 1;
+    int bytesWritten = 0;
+
+    while (a != 0) {
+        if (a > 192) {
+            
+        } else if (a < 64) {
+            for (int x = 0; x < a; x++) {
+                qname[bytesWritten] = packet[position];
+                position++;
+                bytesWritten++;
+            }
+        }
+        a = packet[position];
+        position++;
+    }
+
