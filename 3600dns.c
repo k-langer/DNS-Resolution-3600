@@ -91,6 +91,7 @@ int main(int argc, char *argv[]) {
    * get you started.
    */
 
+    int status;
   // process the arguments
     if (argc != 3) {
          printf("Usage: ./3600dns @<server:port> <name>\n");
@@ -98,8 +99,10 @@ int main(int argc, char *argv[]) {
     } 
    // set the default port to 53
     int port = 53;
+    char name_buf[150];
     char* server = argv[1] + 1;
-    char* name = argv[2];
+    char* name = (char*) &name_buf;
+    memcpy( name,argv[2],strlen(argv[2]) );
     char* offset = strchr(argv[1], ':');
     if (offset) {
         *offset = 0;
@@ -198,7 +201,7 @@ int main(int argc, char *argv[]) {
     
     if (select(sock + 1, &socks, NULL, NULL, &t)) {
         in_len = sizeof(in);
-        int status = recvfrom(sock, packetDNS, MAX_IP_PACKET_SIZE, 0, (struct sockaddr*) &in, &in_len);
+        status = recvfrom(sock, packetDNS, MAX_IP_PACKET_SIZE, 0, (struct sockaddr*) &in, &in_len);
         if ( status < 0) {
             printf("%s in recvfrom\n",strerror(errno));
             return -1;    
@@ -216,13 +219,17 @@ int main(int argc, char *argv[]) {
             printf("Header mismatch\n");
             return 1;
         }
-        int numAnswers = ntohs(responseHeader->ANCOUNT);
+        //int numAnswers = ntohs(responseHeader->ANCOUNT);
 
         // print out the result
         dump_packet( packetDNS, 100 );
 
         unsigned char* qname = calloc(100, sizeof(char));
         parse_qname( packetDNS, qname, sizeof(headerDNS_t) );
+        if (!strcmp((char*)argv[2],(char*)qname)) {
+            printf("Different qnames\n");
+            return -1;
+        }
     } else {
         // a timeout occurred
         printf("NORESPONSE");
@@ -243,7 +250,7 @@ int parse_qname( unsigned char* packet, unsigned char* qname, int startPosition 
 
     while (a != 0) {
         if (a & 192) {
-            int offset = ( a & (~192) + packet[position]);
+            int offset = ( ( a & (~192) ) + packet[position]);
             position++;
             parse_qname(packet, qname + bytesWritten, offset);
         } else if (a < 64) {
