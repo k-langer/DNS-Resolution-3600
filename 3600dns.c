@@ -192,17 +192,17 @@ int main(int argc, char *argv[]) {
 
     // wait to receive, or for a timeout
     if (select(sock + 1, &socks, NULL, NULL, &t)) {
-    if (recvfrom(sock, packetDNS/*<<input buffer>>*/, MAX_IP_PACKET_SIZE/*<<input len>>*/, 0, (struct sockaddr*) &in, &in_len) < 0) {
-        printf("Error occured in recvfrom\n");
-        return -1;    
-    }
+        if (recvfrom(sock, packetDNS/*<<input buffer>>*/, MAX_IP_PACKET_SIZE/*<<input len>>*/, 0, (struct sockaddr*) &in, &in_len) < 0) {
+            printf("Error occured in recvfrom\n");
+            return -1;    
+        }
     } else {
         // a timeout occurred
-        printf("Timeout of %d seconds\n", (int)t.tv_sec);
+        printf("NORESPONSE");
     }
 
      // print out the result
-     dump_packet( packetDNS,  packetSize );
+     dump_packet( packetDNS, strlen(packetDNS) );
 
     return 0;
 }
