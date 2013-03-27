@@ -22,7 +22,7 @@
 
 #include "3600dns.h"
 
-int parse_qname( char* packet, char* qname );
+int parse_qname( unsigned char* packet, unsigned char* qname, int startPosition );
 
 /**
  * This function will print a hex dump of the provided packet to the screen
@@ -192,36 +192,38 @@ int main(int argc, char *argv[]) {
     t.tv_sec = 5;
     t.tv_usec = 0;
 
+    headerDNS_t * responseHeader =  (headerDNS_t*)calloc(1, sizeof(headerDNS_t));
+    
     // wait to receive, or for a timeout
     if (select(sock + 1, &socks, NULL, NULL, &t)) {
         if (recvfrom(sock, packetDNS/*<<input buffer>>*/, MAX_IP_PACKET_SIZE/*<<input len>>*/, 0, (struct sockaddr*) &in, &in_len) < 0) {
             printf("Error occured in recvfrom\n");
             return -1;    
         }
+        if (!responseHeader) {
+            return -1;
+        }
+
+        //Check header for consistancy
+        memcpy( responseHeader,packetDNS,sizeof(headerDNS_t) );
+        if ( ntohs(responseHeader->ID) != QUERY_ID || 
+             responseHeader->QR != 1 || 
+             responseHeader->RD != 1 || 
+             responseHeader->RA != 1 ) {
+            printf("Header mismatch\n");
+            return 1;
+        }
+        int numAnswers = ntohs(responseHeader->ANCOUNT);
+
+        // print out the result
+        dump_packet( packetDNS, 100 );
+
+        unsigned char* qname = calloc(100, sizeof(char));
+        parse_qname( packetDNS, qname, sizeof(headerDNS_t) );
     } else {
         // a timeout occurred
         printf("NORESPONSE");
     }
-
-    headerDNS_t * responseHeader =  (headerDNS_t*)calloc(1, sizeof(headerDNS_t));
-    if (!responseHeader) {
-        return -1;
-    }
-
-    //Check header for consistancy
-    memcpy( responseHeader,packetDNS,sizeof(headerDNS_t) );
-    if ( ntohs(responseHeader->ID) != QUERY_ID || 
-         responseHeader->QR != 1 || 
-         responseHeader->RD != 1 || 
-         responseHeader->RA != 1 ) {
-        printf("Header mismatch\n");
-        return 1;
-    }
-    int numAnswers = ntohs(responseHeader->ANCOUNT);
-
-    // print out the result
-    dump_packet( packetDNS, strlen(packetDNS) );
-
 
     free(responseHeader);
     free(header);
@@ -237,16 +239,28 @@ int parse_qname( unsigned char* packet, unsigned char* qname, int startPosition 
     int bytesWritten = 0;
 
     while (a != 0) {
-        if (a > 192) {
-            
+        if (a & 192) {
+            int offset = ( a & (~192) + packet[position]);
+            position++;
+            parse_qname(packet, qname + bytesWritten, offset);
         } else if (a < 64) {
             for (int x = 0; x < a; x++) {
                 qname[bytesWritten] = packet[position];
                 position++;
                 bytesWritten++;
             }
+            qname[bytesWritten] = '.';
+            bytesWritten++;
         }
         a = packet[position];
         position++;
     }
+
+    if (qname[bytesWritten - 1] == '.') {
+        bytesWritten--;
+    }
+    qname[bytesWritten] = 0; 
+
+    return 0;
+}
 
