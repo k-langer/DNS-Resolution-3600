@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
 
 
    // send the DNS request (and call dump_packet with your request)
-    dump_packet( packetDNS, packetSize );
+    //dump_packet( packetDNS, packetSize );
 
    // first, open a UDP socket  
     int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -200,6 +200,22 @@ int main(int argc, char *argv[]) {
         // a timeout occurred
         printf("NORESPONSE");
     }
+
+    headerDNS_t * responseHeader =  (headerDNS_t*)calloc(1, sizeof(headerDNS_t));
+    if (!responseHeader) {
+        return -1;
+    }
+
+    //Check header for consistancy
+    memcpy( responseHeader,packetDNS,sizeof(headerDNS_t) );
+    if ( ntohs(responseHeader->ID) != QUERY_ID || 
+         responseHeader->QR != 1 || 
+         responseHeader->RD != 1 || 
+         responseHeader->RA != 1 ) {
+        printf("Header mismatch\n");
+        return 1;
+    }
+    int numAnswers = ntohs(responseHeader->ANCOUNT);
 
      // print out the result
      dump_packet( packetDNS, strlen(packetDNS) );
