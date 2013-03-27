@@ -225,11 +225,18 @@ int main(int argc, char *argv[]) {
         dump_packet( packetDNS, 100 );
 
         unsigned char* qname = calloc(100, sizeof(char));
-        parse_qname( packetDNS, qname, sizeof(headerDNS_t) );
+        packetSize = parse_qname( packetDNS, qname, sizeof(headerDNS_t) );
         if (!strcmp((char*)argv[2],(char*)qname)) {
-            printf("Different qnames\n");
+            printf("ERROR: different qnames\n");
             return -1;
         }
+        answerDNS_t * answer =  (answerDNS_t*)calloc(1, sizeof(answerDNS_t));
+        if (!answer) {
+            return -1;
+        }
+        memcpy(answer,packetDNS+packetSize,sizeof(answerDNS_t));
+        packetSize += sizeof(answerDNS_t);
+        
     } else {
         // a timeout occurred
         printf("NORESPONSE");
@@ -271,6 +278,6 @@ int parse_qname( unsigned char* packet, unsigned char* qname, int startPosition 
     }
     qname[bytesWritten] = 0; 
 
-    return 0;
+    return position;
 }
 

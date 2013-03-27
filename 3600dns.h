@@ -28,6 +28,13 @@ typedef struct headerDNS{
     unsigned int ARCOUNT:16;     
 } headerDNS_t;
 
+typedef struct answerDNS{
+    unsigned int TYPE:16; 
+    unsigned int CLASS:16;
+    unsigned int TTL:32;
+    unsigned int RDLENGTH:16;
+} answerDNS_t;
+
 typedef struct questionDNS{
     unsigned int QTYPE:16;
     unsigned int QCLASS:16;  
