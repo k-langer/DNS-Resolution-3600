@@ -19,7 +19,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
+#include <errno.h>
 #include "3600dns.h"
 
 int parse_qname( unsigned char* packet, unsigned char* qname, int startPosition );
@@ -195,9 +195,12 @@ int main(int argc, char *argv[]) {
     headerDNS_t * responseHeader =  (headerDNS_t*)calloc(1, sizeof(headerDNS_t));
     
     // wait to receive, or for a timeout
+    
     if (select(sock + 1, &socks, NULL, NULL, &t)) {
-        if (recvfrom(sock, packetDNS/*<<input buffer>>*/, MAX_IP_PACKET_SIZE/*<<input len>>*/, 0, (struct sockaddr*) &in, &in_len) < 0) {
-            printf("Error occured in recvfrom\n");
+        in_len = sizeof(in);
+        int status = recvfrom(sock, packetDNS, MAX_IP_PACKET_SIZE, 0, (struct sockaddr*) &in, &in_len);
+        if ( status < 0) {
+            printf("%s in recvfrom\n",strerror(errno));
             return -1;    
         }
         if (!responseHeader) {
