@@ -56,3 +56,17 @@ number and uses that number as a length. It goes through reading lengths of data
 replacing the length field with a period until it reads an EOF (/0) or a pointer. A pointer 
 is byte that starts with a 0xC00. When there is a pointer the parser jumps to the location 
 pointed to and continues reading as normal.
+3600dns supports a variable length of arguments. This allows it to query specific ports on the 
+DNS server and allows for an argument to specify if the URL is a mail type or a name type. In 
+order to interpret these additional types, additional logic was written to assign values to 
+the type field in the question and then the ability to multiplex the value of type in the
+response. Each type of response has logic to interpret it either as a name, an IP, or some
+combination. 
+
+Testing and Debugging: 
+This program was relatively straight forward. As a result, the code was programed sequentially  
+and unit tested using the dunp_packet function. To debug the response gdb was used to check
+values inside structures and step into the parse_* functions. Using dump packet it was easy 
+to compare to the example given in the implementation notes. Each part of the response was handled 
+and then the size was added and only when everything was correct in the truncated dump_packet
+did development move on.
