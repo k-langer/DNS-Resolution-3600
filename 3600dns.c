@@ -99,9 +99,8 @@ int main(int argc, char *argv[]) {
     } 
    // set the default port to 53
     int port = 53;
-    char name_buf[150];
+    char* name = calloc(150,sizeof(char));
     char* server = argv[1] + 1;
-    char* name = (char*) &name_buf;
     memcpy( name,argv[2],strlen(argv[2]) );
     char* offset = strchr(argv[1], ':');
     if (offset) {
