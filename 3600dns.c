@@ -228,7 +228,8 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         packetSize = sizeof(headerDNS_t);
-        //int numAnswers = ntohs(header->ANCOUNT);
+        int numAnswers = ntohs(header->ANCOUNT);
+        do {
         /*==========================
             Parse response QUESTION QNAME
            ==========================*/
@@ -276,16 +277,23 @@ int main(int argc, char *argv[]) {
             Parse response RDATA
            =====================*/
         unsigned char* rdata = calloc(150,sizeof(char));
-        parse_ip(packetDNS,rdata,packetSize);
-        printf("IP\t%s",rdata);
-        packetSize += ntohs(answer->RDLENGTH);
-        
+        if ( ntohs(answer->TYPE) == RECORDS ) {
+            parse_ip(packetDNS,rdata,packetSize);
+            printf("IP\t%s",rdata);
+            packetSize += ntohs(answer->RDLENGTH);
+        }
+         if ( ntohs(answer->TYPE) == CNAME ) {
+            len = parse_qname(packetDNS,rdata,packetSize);
+            printf("CNAME\t%s",rdata);
+            packetSize += len;
+        }    
         if ( header->AA) {
             printf("\tauth\n");
         }else{
             printf("\tnonauth\n");
         }
-        
+        numAnswers--;
+      } while (numAnswers);
     } else {
         // a timeout occurred
         printf("NORESPONSE");

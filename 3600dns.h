@@ -12,6 +12,9 @@
 #define MAX_IP_PACKET_SIZE 65542
 #define QUERY_ID 1337
 
+#define RECORDS 1
+#define CNAME 5
+
 typedef struct headerDNS{
     unsigned int ID:16; 
     unsigned int RD:1;
