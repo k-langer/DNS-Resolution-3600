@@ -93,16 +93,29 @@ int main(int argc, char *argv[]) {
 
     int status;
   // process the arguments
-    if (argc != 3) {
-         printf("Usage: ./3600dns @<server:port> <name>\n");
+    if (argc != 3 && argc != 4) {
+         printf("Usage: ./3600dns [-ns|-mx] @<server:port> <name>\n");
         exit(-1);
     } 
+    char serverType = RECORDS;
+    if (argc == 4) {
+        if (!strcmp(argv[1],"-mx")){
+            serverType = MX;
+        } else if (!strcmp(argv[1],"-ns")){
+            serverType = NS;
+        } else {
+            return -1;
+        }
+        argc = 1;
+    } else {
+        argc = 0;
+    }
    // set the default port to 53
     int port = 53;
     char* name = calloc(150,sizeof(char));
-    char* server = argv[1] + 1;
-    memcpy( name,argv[2],strlen(argv[2]) );
-    char* offset = strchr(argv[1], ':');
+    char* server = argv[argc+1] + 1;
+    memcpy( name,argv[argc+2],strlen(argv[2]) );
+    char* offset = strchr(argv[argc+1], ':');
     if (offset) {
         *offset = 0;
         port = atoi(offset + 1);
@@ -120,7 +133,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
     questionDNS_t * question =  (questionDNS_t*)calloc(1, sizeof(questionDNS_t));
-    if (!question) {
+    if (!question) { 
         return -1;
     }
     answerDNS_t * answer =  (answerDNS_t*)calloc(1, sizeof(answerDNS_t));
@@ -133,7 +146,17 @@ int main(int argc, char *argv[]) {
     header->RD = ~(0);
     header->QDCOUNT = htons(0x0001);
     //setup the question, QNAME is added later
-    question->QTYPE = htons(0x0001);
+    switch (serverType){
+        case RECORDS: 
+            question->QTYPE = htons(0x0001);
+            break;
+        case MX:
+            question->QTYPE = htons(MX);
+            break;
+        case NS:
+             question->QTYPE = htons(NS);
+            break;
+    }
     question->QCLASS = htons(0x0001);
 
     int packetSize = 0;
@@ -244,7 +267,9 @@ int main(int argc, char *argv[]) {
             Parse response QUESTION
            ==========================*/
         memcpy( question, packetDNS+packetSize, sizeof(questionDNS_t) );
-        if ( ntohs(question->QTYPE) != (1) || 
+        if ( (ntohs(question->QTYPE) != RECORDS && 
+             ntohs(question->QTYPE) != MX && 
+             ntohs(question->QTYPE) != NS) || 
              ntohs(question->QCLASS) != (1) ) {
              printf("ERROR: question mismatch\n");
             return -1;
@@ -265,7 +290,10 @@ int main(int argc, char *argv[]) {
             Parse response ANSWER
            ==========================*/
         memcpy(answer,packetDNS+packetSize,sizeof(answerDNS_t));
-        if ( ntohs(answer->TYPE) & ~(5) || 
+        if ((ntohs(answer->TYPE) != RECORDS && 
+             ntohs(answer->TYPE) != CNAME && 
+             ntohs(answer->TYPE) != MX && 
+             ntohs(answer->TYPE) != NS) ||  
             ntohs(answer->CLASS) != 1 ) {
             printf("NOTFOUND\n");
             return 1;
@@ -276,16 +304,28 @@ int main(int argc, char *argv[]) {
             Parse response RDATA
            =====================*/
         unsigned char* rdata = calloc(150,sizeof(char));
+        short preference = 0;
         if ( ntohs(answer->TYPE) == RECORDS ) {
             parse_ip(packetDNS,rdata,packetSize);
             printf("IP\t%s",rdata);
             packetSize += ntohs(answer->RDLENGTH);
-        }
-         if ( ntohs(answer->TYPE) == CNAME ) {
+        } else if ( ntohs(answer->TYPE) == CNAME ) {
             len = parse_qname(packetDNS,rdata,packetSize);
             printf("CNAME\t%s",rdata);
             packetSize += len;
-        }    
+        } else if ( ntohs(answer->TYPE) == NS ) {
+            len = parse_qname(packetDNS,rdata,packetSize);
+            printf("NS\t%s",rdata);
+            packetSize += len;
+        } else if ( ntohs(answer->TYPE) == MX ) {
+            memcpy(&preference,packetDNS+packetSize,sizeof(short));
+            packetSize+=sizeof(preference);  
+            preference = ntohs(preference); 
+            len = parse_qname(packetDNS,rdata,packetSize);
+            printf("MX\t%s\t%d",rdata,preference);
+            packetSize += len;
+        }
+            
         if ( header->AA) {
             printf("\tauth\n");
         }else{

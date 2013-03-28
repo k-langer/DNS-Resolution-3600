@@ -14,7 +14,8 @@
 
 #define RECORDS 1
 #define CNAME 5
-
+#define MX 15
+#define NS 2
 typedef struct headerDNS{
     unsigned int ID:16; 
     unsigned int RD:1;
@@ -36,9 +37,9 @@ typedef struct answerDNS{
     unsigned int CLASS:16;
     unsigned int TTL:32;
     unsigned int RDLENGTH:16;
+    //unsigned int PREFERENCE:16;
 } answerDNS_t;
 
-//2 bytes of padding will be added at runtime
 typedef struct questionDNS{
     unsigned int QTYPE:16;
     unsigned int QCLASS:16;  
