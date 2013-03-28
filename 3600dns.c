@@ -267,7 +267,7 @@ int main(int argc, char *argv[]) {
         memcpy(answer,packetDNS+packetSize,sizeof(answerDNS_t));
         if ( ntohs(answer->TYPE) & ~(5) || 
             ntohs(answer->CLASS) != 1 ) {
-            printf("ERORR: answer mismatch\n");
+            printf("NOTFOUND\n");
             return 1;
         }
         //Two bytes need to be subtracted from answerDNS_t becasue padding was added
@@ -280,11 +280,10 @@ int main(int argc, char *argv[]) {
         printf("IP\t%s",rdata);
         packetSize += ntohs(answer->RDLENGTH);
         
-        if ( ntohs(answer->TYPE) == 1) {
-            printf("\tnonauth\n");
-        }
-        if ( ntohs(answer->TYPE) == 5) {
+        if ( header->AA) {
             printf("\tauth\n");
+        }else{
+            printf("\tnonauth\n");
         }
         
     } else {
