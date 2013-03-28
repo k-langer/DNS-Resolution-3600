@@ -110,6 +110,8 @@ int main(int argc, char *argv[]) {
     } 
    
   // construct the DNS request
+    
+    //Structure mallocs
     unsigned char * packetDNS =  (unsigned char*)calloc(MAX_IP_PACKET_SIZE, sizeof(char));
     if (!packetDNS) {
         return -1;
@@ -122,6 +124,11 @@ int main(int argc, char *argv[]) {
     if (!question) {
         return -1;
     }
+    answerDNS_t * answer =  (answerDNS_t*)calloc(1, sizeof(answerDNS_t));
+        if (!answer) {
+            return -1;
+    }
+
     //setup the header
     header->ID = htons(QUERY_ID);
     header->RD = ~(0);
@@ -179,6 +186,8 @@ int main(int argc, char *argv[]) {
 
     //Clear question buffer to use for answer buffer in the future  
     memset( packetDNS, 0, MAX_IP_PACKET_SIZE );
+    memset( question, 0, sizeof(questionDNS_t) );
+    memset( header, 0, sizeof(headerDNS_t) );
     packetSize = 0;
 
     // wait for the DNS reply (timeout: 5 seconds)
@@ -194,8 +203,6 @@ int main(int argc, char *argv[]) {
     struct timeval t;
     t.tv_sec = 5;
     t.tv_usec = 0;
-
-    headerDNS_t * responseHeader =  (headerDNS_t*)calloc(1, sizeof(headerDNS_t));
     
     // wait to receive, or for a timeout
     
@@ -206,47 +213,79 @@ int main(int argc, char *argv[]) {
             printf("%s in recvfrom\n",strerror(errno));
             return -1;    
         }
-        if (!responseHeader) {
+        if (!header) {
             return -1;
         }
-
+        /*==========================
+            Parse response HEADER
+           ==========================*/
         //Check header for consistancy
-        memcpy( responseHeader,packetDNS,sizeof(headerDNS_t) );
-        if ( ntohs(responseHeader->ID) != QUERY_ID || 
-             responseHeader->QR != 1 || 
-             responseHeader->RD != 1 || 
-             responseHeader->RA != 1 ) {
-            printf("Header mismatch\n");
+        memcpy( header,packetDNS,sizeof(headerDNS_t) );
+        if ( ntohs(header->ID) != QUERY_ID || 
+             header->QR != 1 || 
+             header->RD != 1 || 
+             header->RA != 1 ) {
+            printf("ERROR: Header mismatch\n");
             return 1;
         }
-        //int numAnswers = ntohs(responseHeader->ANCOUNT);
-
-        // print out the result
-        dump_packet( packetDNS, 100 );
-
-        unsigned char* qname = calloc(100, sizeof(char));
-        packetSize = parse_qname( packetDNS, qname, sizeof(headerDNS_t) );
+        packetSize = sizeof(headerDNS_t);
+        //int numAnswers = ntohs(header->ANCOUNT);
+        /*==========================
+            Parse response QUESTION QNAME
+           ==========================*/
+        unsigned char* qname = calloc(150, sizeof(char));
+        parse_qname( packetDNS, qname, sizeof(headerDNS_t) );
         if (!strcmp((char*)argv[2],(char*)qname)) {
-            printf("ERROR: different qnames\n");
-            return -1;
+            printf("ERROR: qname mismatch\n");
+            //return -1;
         }
-        answerDNS_t * answer =  (answerDNS_t*)calloc(1, sizeof(answerDNS_t));
-        if (!answer) {
-            return -1;
-        }
-        memcpy(answer,packetDNS+packetSize,sizeof(answerDNS_t));
-        packetSize += sizeof(answerDNS_t);
+        //Add two extra for the packet size becasue there is a character padded at the front and at the back
+        packetSize += strlen((char*)argv[2]) + 2;
+        /*==========================
+            Parse response QUESTION
+           ==========================*/
+        memcpy( question, packetDNS+packetSize, sizeof(questionDNS_t) );
+        if ( ntohs(question->QTYPE) != (1) || 
+             ntohs(question->QCLASS) != (1) ) {
+             printf("ERROR: question mismatch\n");
+            //return -1;
+        }         
+        packetSize += sizeof(questionDNS_t); 
+        /*==========================
+            Parse response ANSWER QNAME
+           ==========================*/
+        memset(qname,0,150);
         
+        parse_qname(packetDNS,qname,packetSize);
+        printf("name: %s\n",qname);
+        /*==========================
+            Parse response ANSWER
+           ==========================*/
+        memcpy(answer,packetDNS+packetSize,sizeof(answerDNS_t));
+
+        if ( ntohs(answer->TYPE) & ~(5) || 
+            ntohs(answer->CLASS) != 1 ) {
+            printf("ERORR: answer mismatch\n");
+            //return 1;
+        }
+        //packetSize += sizeof(answerDNS_t);
+        /*=====================
+            Parse response RDATA
+           =====================*/
+        //unsigned char* rdata = calloc(150,sizeof(char));
+        //parse_qname(packetDNS,rdata,packetSize);
+        //packetSize += ntohs(answer->RDLENGTH);
+
     } else {
         // a timeout occurred
         printf("NORESPONSE");
     }
-
-    free(responseHeader);
+    // print out the result
+    dump_packet( packetDNS +  packetSize,sizeof(answerDNS_t) );
     free(header);
     free(question);
     free(packetDNS);
-
+    free(answer);
     return 0;
 }
 

@@ -29,10 +29,11 @@ typedef struct headerDNS{
 } headerDNS_t;
 
 typedef struct answerDNS{
-    unsigned int TYPE:16; 
-    unsigned int CLASS:16;
-    unsigned int TTL:32;
+    unsigned int PADDING:16;
     unsigned int RDLENGTH:16;
+    unsigned int TTL:32;
+    unsigned int CLASS:16;
+    unsigned int TYPE:16; 
 } answerDNS_t;
 
 typedef struct questionDNS{
