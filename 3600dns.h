@@ -33,8 +33,6 @@ typedef struct answerDNS{
     unsigned int CLASS:16;
     unsigned int TTL:32;
     unsigned int RDLENGTH:16;
-   
-    
 } answerDNS_t;
 
 typedef struct questionDNS{

@@ -21,7 +21,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include "3600dns.h"
-
+int parse_ip( unsigned char* packet, unsigned char* rdata, int startPosition );
 int parse_qname( unsigned char* packet, unsigned char* qname, int startPosition );
 
 /**
@@ -236,7 +236,7 @@ int main(int argc, char *argv[]) {
         int len = parse_qname( packetDNS, qname, sizeof(headerDNS_t) );
         if (!strcmp((char*)argv[2],(char*)qname+1)) {
             printf("ERROR: qname mismatch '%s'\n",qname);
-            //return -1;
+            return -1;
         }
         
         //Add two extra for the packet size becasue there is a character padded at the front and at the back
@@ -248,7 +248,7 @@ int main(int argc, char *argv[]) {
         if ( ntohs(question->QTYPE) != (1) || 
              ntohs(question->QCLASS) != (1) ) {
              printf("ERROR: question mismatch\n");
-            //return -1;
+            return -1;
         }         
         packetSize += sizeof(questionDNS_t); 
         /*==========================
@@ -258,7 +258,7 @@ int main(int argc, char *argv[]) {
         len = parse_qname(packetDNS,qname,packetSize);
         if (!strcmp((char*)argv[2],(char*)qname+1)) {
             printf("ERROR: answer qname mismatch '%s'\n",qname);
-            //return -1;
+            return -1;
         }
         packetSize += len;
         /*==========================
@@ -268,29 +268,55 @@ int main(int argc, char *argv[]) {
         if ( ntohs(answer->TYPE) & ~(5) || 
             ntohs(answer->CLASS) != 1 ) {
             printf("ERORR: answer mismatch\n");
-            //return 1;
+            return 1;
         }
-        packetSize += sizeof(answerDNS_t);
+        //Two bytes need to be subtracted from answerDNS_t becasue padding was added
+        packetSize += sizeof(answerDNS_t) - 2;
         /*=====================
             Parse response RDATA
            =====================*/
-        //unsigned char* rdata = calloc(150,sizeof(char));
-        //parse_qname(packetDNS,rdata,packetSize);
-        //packetSize += ntohs(answer->RDLENGTH);
-
+        unsigned char* rdata = calloc(150,sizeof(char));
+        parse_ip(packetDNS,rdata,packetSize);
+        printf("IP\t%s",rdata);
+        packetSize += ntohs(answer->RDLENGTH);
+        
+        if ( ntohs(answer->TYPE) == 1) {
+            printf("\tnonauth\n");
+        }
+        if ( ntohs(answer->TYPE) == 5) {
+            printf("\tauth\n");
+        }
+        
     } else {
         // a timeout occurred
         printf("NORESPONSE");
     }
     // print out the result
-    dump_packet( packetDNS, packetSize);
+    //dump_packet( packetDNS, packetSize);
     free(header);
     free(question);
     free(packetDNS);
     free(answer);
     return 0;
 }
-
+int parse_ip( unsigned char* packet, unsigned char* rdata, int startPosition ) {
+    unsigned char a = packet[startPosition];
+    int position = startPosition + 1;
+    unsigned char segments[4];
+   for (int i = 0; i < 4; i++)
+   {
+       /* if (a & 192) {
+            a = packet[position];
+            position = a;
+        } else*/ {
+            segments[i] = a;
+        }
+        a = packet[position];
+        position++;
+    }
+    sprintf((char*)rdata,"%d.%d.%d.%d",segments[0],segments[1],segments[2],segments[3]);
+    return 4;
+}
 int parse_qname( unsigned char* packet, unsigned char* qname, int startPosition ) {
     unsigned char a = packet[startPosition];
     int position = startPosition + 1;
