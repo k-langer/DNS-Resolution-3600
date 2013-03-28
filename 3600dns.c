@@ -233,13 +233,14 @@ int main(int argc, char *argv[]) {
             Parse response QUESTION QNAME
            ==========================*/
         unsigned char* qname = calloc(150, sizeof(char));
-        parse_qname( packetDNS, qname, sizeof(headerDNS_t) );
+        int len = parse_qname( packetDNS, qname, sizeof(headerDNS_t) );
         if (!strcmp((char*)argv[2],(char*)qname)) {
-            printf("ERROR: qname mismatch\n");
+            printf("ERROR: qname mismatch '%s'\n",qname);
             //return -1;
         }
+        
         //Add two extra for the packet size becasue there is a character padded at the front and at the back
-        packetSize += strlen((char*)argv[2]) + 2;
+        packetSize += len;
         /*==========================
             Parse response QUESTION
            ==========================*/
@@ -254,13 +255,16 @@ int main(int argc, char *argv[]) {
             Parse response ANSWER QNAME
            ==========================*/
         memset(qname,0,150);
-        
-        //parse_qname(packetDNS,qname,packetSize);
+        len = parse_qname(packetDNS,qname,packetSize);
+        if (!strcmp((char*)argv[2],(char*)qname)) {
+            printf("ERROR: answer qname mismatch '%s'\n",qname);
+            //return -1;
+        }
+        packetSize += len;
         /*==========================
             Parse response ANSWER
            ==========================*/
         memcpy(answer,packetDNS+packetSize,sizeof(answerDNS_t));
-
         if ( ntohs(answer->TYPE) & ~(5) || 
             ntohs(answer->CLASS) != 1 ) {
             printf("ERORR: answer mismatch\n");
@@ -291,13 +295,15 @@ int parse_qname( unsigned char* packet, unsigned char* qname, int startPosition 
     unsigned char a = packet[startPosition];
     int position = startPosition + 1;
     int bytesWritten = 0;
-
+    int final_position = 0;
     while (a != 0) {
         if (a & 192) {
-            int offset = ( ( a & (~192) ) + packet[position]);
-            position++;
-            parse_qname(packet, qname + bytesWritten, offset);
-        } else if (a < 64) {
+            a = packet[position];
+            if (!final_position) {
+                final_position = position+1;
+            }
+            position = a;
+        } else {
             for (int x = 0; x < a; x++) {
                 qname[bytesWritten] = packet[position];
                 position++;
@@ -314,7 +320,9 @@ int parse_qname( unsigned char* packet, unsigned char* qname, int startPosition 
         bytesWritten--;
     }
     qname[bytesWritten] = 0; 
-
-    return position;
+    if (!final_position) {
+                final_position = position;
+    }
+    return final_position-startPosition;
 }
 
