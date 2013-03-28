@@ -234,7 +234,7 @@ int main(int argc, char *argv[]) {
            ==========================*/
         unsigned char* qname = calloc(150, sizeof(char));
         int len = parse_qname( packetDNS, qname, sizeof(headerDNS_t) );
-        if (!strcmp((char*)argv[2],(char*)qname)) {
+        if (!strcmp((char*)argv[2],(char*)qname+1)) {
             printf("ERROR: qname mismatch '%s'\n",qname);
             //return -1;
         }
@@ -256,7 +256,7 @@ int main(int argc, char *argv[]) {
            ==========================*/
         memset(qname,0,150);
         len = parse_qname(packetDNS,qname,packetSize);
-        if (!strcmp((char*)argv[2],(char*)qname)) {
+        if (!strcmp((char*)argv[2],(char*)qname+1)) {
             printf("ERROR: answer qname mismatch '%s'\n",qname);
             //return -1;
         }
