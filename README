@@ -1,2 +1,58 @@
 Authors: Kevin Langer, Javier Muhrer
 CS3600 DNS Networking Project
+
+Developed on
+ISA: x86-AMD64
+Linux: 2.6.31-23-generic-pae
+gcc: (Ubuntu 4.4.1-4ubuntu9) 4.4.1
+Using Compiler flags: gcc -std=c99 -O0 -g -lm -Wall -pedantic -Werror -Wextra
+
+Installing/Running
+Copy 3600dns.c, 3600dns.h, and the included Makefile into a local directory. 
+make; 
+Run ./3600dns [-ns|-mx] @<server:port> <name>
+
+Is: 
+A DNS client program that loops up domain names and addresses from a provided URL. 
+An implementation of a DNS client with mail server support. 
+An implementation of a DNS client with name server support. 
+An implementation that fails safely on invalid URLs and DNS server IPs. 
+An implementation that supports DNS data deduplication. 
+Able to receive multiple answers for one query URL. 
+Is not: 
+A DNS response server. 
+compilation portable to big endian machines. 
+
+Description/High Level Design: 
+3600dns creates a DNS query from a provided URL and flags. It 
+sends that query to a DNS server that is provided in the
+arguments. If the offsite server exists, it sends a response to
+3600dns. Next 3600dns checks the format of the response packet
+to ensure that the response is both valid and the expected data
+by comparing the header, verbatim question, and the non-data
+part of the answer to the expected format of the response. Based 
+on the type of data that is expected the data in the answer is 
+parsed to into domain names, IP addresses, mail addresses, and
+name server addresses. If there are multiple answers in the response
+each one is parsed individually and displayed. If there are mismatches
+an error is displayed relating to the cause of the mismatch. 
+
+Implementation: 
+DNS query and response packets can be broken down into structures for 
+the header, question, and answer. Many of these basic elements are fixed 
+length. Moreover, many of these elements are not bitwise addressable. As a 
+result C structures were used for all static length elements in 3600dns. The
+variable length items are the names and data section of the answer. These followed
+parsing rules that were implemented in parse_qname and parse_ip functions. Query
+entries that have byte fields that are larger than one were all converted from 
+machine edianness to network edianness for queries. The reverse was done when 
+reading response fields. While this method is portable, the use of a structure
+to format the header is not. 3600dns makes simplifying assumptions about the bit
+packing of structure variables that are smaller than a byte when compiled in the
+build environment specified above. 
+3600dns makes use of DNS packet compression to interpret server responses that 
+contain labels and pointers. If there are no pointers then the program reads for a
+number and uses that number as a length. It goes through reading lengths of data and
+replacing the length field with a period until it reads an EOF (/0) or a pointer. A pointer 
+is byte that starts with a 0xC00. When there is a pointer the parser jumps to the location 
+pointed to and continues reading as normal.
