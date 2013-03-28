@@ -168,7 +168,7 @@ int main(int argc, char *argv[]) {
 
 
    // send the DNS request (and call dump_packet with your request)
-    //dump_packet( packetDNS, packetSize );
+    dump_packet( packetDNS, packetSize );
 
    // first, open a UDP socket  
     int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -256,8 +256,7 @@ int main(int argc, char *argv[]) {
            ==========================*/
         memset(qname,0,150);
         
-        parse_qname(packetDNS,qname,packetSize);
-        printf("name: %s\n",qname);
+        //parse_qname(packetDNS,qname,packetSize);
         /*==========================
             Parse response ANSWER
            ==========================*/
@@ -268,7 +267,7 @@ int main(int argc, char *argv[]) {
             printf("ERORR: answer mismatch\n");
             //return 1;
         }
-        //packetSize += sizeof(answerDNS_t);
+        packetSize += sizeof(answerDNS_t);
         /*=====================
             Parse response RDATA
            =====================*/
@@ -281,7 +280,7 @@ int main(int argc, char *argv[]) {
         printf("NORESPONSE");
     }
     // print out the result
-    dump_packet( packetDNS +  packetSize,sizeof(answerDNS_t) );
+    dump_packet( packetDNS, packetSize);
     free(header);
     free(question);
     free(packetDNS);
