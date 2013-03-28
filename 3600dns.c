@@ -229,7 +229,6 @@ int main(int argc, char *argv[]) {
         }
         packetSize = sizeof(headerDNS_t);
         int numAnswers = ntohs(header->ANCOUNT);
-        do {
         /*==========================
             Parse response QUESTION QNAME
            ==========================*/
@@ -240,7 +239,6 @@ int main(int argc, char *argv[]) {
             return -1;
         }
         
-        //Add two extra for the packet size becasue there is a character padded at the front and at the back
         packetSize += len;
         /*==========================
             Parse response QUESTION
@@ -255,6 +253,7 @@ int main(int argc, char *argv[]) {
         /*==========================
             Parse response ANSWER QNAME
            ==========================*/
+        do {
         memset(qname,0,150);
         len = parse_qname(packetDNS,qname,packetSize);
         if (!strcmp((char*)argv[2],(char*)qname+1)) {

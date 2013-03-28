@@ -38,6 +38,7 @@ typedef struct answerDNS{
     unsigned int RDLENGTH:16;
 } answerDNS_t;
 
+//2 bytes of padding will be added at runtime
 typedef struct questionDNS{
     unsigned int QTYPE:16;
     unsigned int QCLASS:16;  
